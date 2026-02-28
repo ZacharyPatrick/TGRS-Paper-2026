@@ -17,7 +17,7 @@
 # Keeping the final PDF might be useful for quick preview on GitHub, but generally generated files are ignored.
 # given the user's context, they might want to track the PDF to see the result easily.
 # But standard practice is to ignore it. Let's ignore it to keep repo small.
-*.pdf
+# *.pdf
 
 # Editor files
 .vscode/
@@ -25,4 +25,4 @@
 *~
 
 # Generated directory
-out/
+# out/
