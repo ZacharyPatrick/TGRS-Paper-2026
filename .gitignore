@@ -1,0 +1,28 @@
+# LaTeX build files
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.dvi
+*.nav
+*.snm
+*.vrb
+
+# PDF output (optional, usually you want to generate this, but some keep it)
+# Keeping the final PDF might be useful for quick preview on GitHub, but generally generated files are ignored.
+# given the user's context, they might want to track the PDF to see the result easily.
+# But standard practice is to ignore it. Let's ignore it to keep repo small.
+*.pdf
+
+# Editor files
+.vscode/
+*.swp
+*~
+
+# Generated directory
+out/
