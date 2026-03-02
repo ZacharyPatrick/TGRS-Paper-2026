@@ -1,4 +1,25 @@
 \documentclass[lettersize,journal]{IEEEtran}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+% 提示词模板样式：一体化灰色标题栏 + 圆角外框 + 灰色文本框
+\newtcolorbox{promptbox}[1]{enhanced,breakable,
+  colback=gray!20,
+  colframe=blue!50!black,boxrule=0.8pt, % 正文大框：蓝色边框
+  arc=2mm,
+  title={#1},
+  colbacktitle=gray!20,                   % 标题栏灰底
+  coltitle=black,                         % 标题文字黑色（防止被全局设成白色）
+  fonttitle=\bfseries\color{black},
+  titlerule=0pt,
+  left=6pt,right=6pt,top=4pt,bottom=4pt,
+  before upper={\setlength{\parindent}{0pt}\small},
+  % 在“标题栏区域”额外画一圈黑色边框（圆角）
+  overlay unbroken={\draw[black,line width=0.8pt,rounded corners=2mm]
+    (title.north west) rectangle (title.south east);},
+  overlay first={\draw[black,line width=0.8pt,rounded corners=2mm]
+    (title.north west) rectangle (title.south east);},
+}
 \usepackage{amsmath,amsfonts}
 \usepackage{algorithmic}
 \usepackage{array}
@@ -83,18 +104,97 @@ Under extreme data scarcity, this inherent variance and similarity becomes a cri
 Despite these challenges, existing semantics-assisted FSRSSC methods \cite{CNSPN,TeAw,ProDFSL} predominantly rely on mean-based strategies for prototype construction. 
 This practice risks incorporating outliers, which causes prototype representation shifts and ultimately induces misclassification, particularly for visually similar scenes.
 
-To address these challenges, this article proposes a novel multimodal framework for few-shot remote sensing scene classification. Targeting the semantic deviation common to large language models in the remote sensing domain, we introduce the Visual Grounded Semantic Refinement (VGSR) module. This module directly anchors to visual evidence in remote sensing images to suppress semantic hallucinations during text generation, providing reliable prior knowledge for the entire network. Existing methods often perform late fusion exclusively at the classifier level, where background noise and target features remain heavily entangled. To overcome this structural limitation, we embed the Dual Cross-Modal Attention (DCMA) module deep within the intermediate stages of the visual backbone. Using the VGSR-generated text descriptions as a semantic prior, DCMA executes cross-modal interactions across spatial and channel dimensions. This actively suppresses complex background clutter during feature extraction and enhances discriminative target features, avoiding the loss of spatial layout information typically caused by global pooling operations.
+To address the above challenges, this article proposes a novel multimodal framework for few-shot remote sensing scene classification. 
+Targeting the semantic deviation common to large language models in the remote sensing domain, we introduce the Visual Grounded Semantic Refinement (VGSR) module. 
+This module directly anchors to visual evidence in remote sensing images to suppress semantic hallucinations during text generation, providing reliable prior knowledge for the entire network. 
+Existing methods often perform late fusion exclusively at the classifier level, where background noise and target features remain heavily entangled. 
+To overcome this structural limitation, we embed the Dual Cross-Modal Attention (DCMA) module deep within the intermediate stages of the visual backbone. 
+Using the VGSR-generated text descriptions as a semantic prior, DCMA executes cross-modal interactions across spatial and channel dimensions. 
+This actively suppresses complex background clutter during feature extraction and enhances discriminative target features, avoiding the loss of spatial layout information typically caused by global pooling operations. 
+Traditional mean aggregation strategies are highly sensitive to outliers and prone to prototype shift. 
+To resolve this critical weakness, we propose the Adaptive Prototype Construction Module (APCM). 
+APCM dynamically assigns adaptive weights to each sample by jointly evaluating the intra-class compactness and inter-class repulsion of support set samples in the metric space. 
+This mitigates interference from noisy samples and broadens decision boundaries between easily confused categories, establishing a robust metric baseline for scenarios with high inter-class similarity. 
+For the inference stage, we introduce the Compactness-Aware Prototype Fusion (CPF) strategy. 
+CPF quantitatively evaluates the distribution uncertainties of purely visual and semantically enhanced prototypes to achieve an adaptive dynamic fusion of both modalities, further improving the reliability of classification decisions under extreme data scarcity.
+The main contributions of this article can be summarized as follows:
+\begin{enumerate}
+    \item A novel multimodal framework for FSRSSC is proposed. 
+    The contributions of this research center on a comprehensive multimodal framework that systematically resolves the severe challenges of background clutter, significant intra-class variance, and high inter-class similarity in remote sensing imagery, establishing a robust paradigm for classification tasks under extremely data-scarce conditions.
+    
+    \item We introduce the VGSR and DCMA modules for active feature modulation.
+    Within this framework, the developed VGSR and DCMA modules introduce visually anchored semantic priors and advance cross-modal interactions to the feature extraction stage. 
+    They achieve explicit background noise suppression and overcome the representation bottlenecks associated with traditional late fusion methodologies.
+    
+    \item We design the APCM and transductive CPF modules for robust metric learning. 
+    Concurrently, the APCM and CPF modules allocate dynamic weights based on dual intra-class and inter-class constraints in the metric space and perform uncertainty-based adaptive prototype fusion. 
+    Together, they prevent outlier-induced prototype distortion and significantly enhance classification robustness across highly similar categories.
+    
+    \item Comprehensive experiments demonstrate superior performance. 
+    Comprehensive experimental evaluations on multiple mainstream few-shot remote sensing public datasets demonstrate that the proposed framework significantly outperforms existing state-of-the-art approaches, thoroughly verifying the effectiveness of the core modules in processing complex remote sensing scenes.
+\end{enumerate}
 
-Traditional mean aggregation strategies are highly sensitive to outliers and prone to prototype shift. To resolve this critical weakness, we propose the Adaptive Prototype Construction Module (APCM). APCM dynamically assigns adaptive weights to each sample by jointly evaluating the intra-class compactness and inter-class repulsion of support set samples in the metric space. This mitigates interference from noisy samples and broadens decision boundaries between easily confused categories, establishing a robust metric baseline for scenarios with high inter-class similarity. For the inference stage, we introduce the Compactness-Aware Prototype Fusion (CPF) strategy. CPF quantitatively evaluates the distribution uncertainties of purely visual and semantically enhanced prototypes to achieve an adaptive dynamic fusion of both modalities, further improving the reliability of classification decisions under extreme data scarcity.
+The rest of this article is organized as follows. Section \ref{sec:related_work} discusses the related work of FSRSSC. Section \ref{sec:proposed_method} presents the proposed method. Section \ref{sec:experiments} evaluates the proposed method on three mainstream remote sensing datasets. Finally, Section \ref{sec:conclusion} concludes the paper.
 
-The contributions of this research center on a comprehensive multimodal framework that systematically resolves the severe challenges of background clutter, significant intra-class variance, and high inter-class similarity in remote sensing imagery, establishing a robust paradigm for classification tasks under extremely data-scarce conditions. Within this framework, the developed VGSR and DCMA modules introduce visually anchored semantic priors and advance cross-modal interactions to the feature extraction stage. They achieve explicit background noise suppression and overcome the representation bottlenecks associated with traditional late fusion methodologies. Concurrently, the APCM and CPF modules allocate dynamic weights based on dual intra-class and inter-class constraints in the metric space and perform uncertainty-based adaptive prototype fusion. Together, they prevent outlier-induced prototype distortion and significantly enhance classification robustness across highly similar categories. Comprehensive experimental evaluations on multiple mainstream few-shot remote sensing public datasets demonstrate that the proposed framework significantly outperforms existing state-of-the-art approaches, thoroughly verifying the effectiveness of the core modules in processing complex remote sensing scenes.
-
-\section{The Design, Intent and \\ Limitations of the Templates}
+\section{Related Work}
 \noindent The templates are intended to {\bf{approximate the final look and page length of the articles/papers}}. Therefore, {\bf{they are NOT intended to be the final produced work that is displayed in print or on IEEEXplore\textsuperscript{\textregistered}}}. They will help to give the authors an approximation of the number of pages that will be in the final version. The structure of the \LaTeX files, as designed, enable easy conversion to XML for the composition systems used by the IEEE's outsource vendors. The XML files are used to produce the final print/IEEEXplore\textsuperscript{\textregistered} pdf and then converted to HTML for IEEEXplore\textsuperscript{\textregistered}. Have you looked at your article/paper in the HTML version?
 
-\section{\LaTeX \ Distributions: Where to Get Them}
-\noindent IEEE recommends using the distribution from the \TeX User Group at \url{http://www.tug.org}. You can join TUG and obtain a DVD distribution or download for free  from the links provided on their website: \url{http://www.tug.org/texlive/}. The DVD includes distributions for Windows, Mac OS X and Linux operating systems.
- 
+\section{Method}
+\subsection{Overview}
+To tackle the intrinsic challenges of complex background interference, substantial intra-class variance, and high inter-class similarity in high-resolution remote sensing (RS) imagery, we propose a novel and comprehensive multimodal framework for few-shot remote sensing scene classification (FSRSSC). 
+Formally, given an $N$-way $K$-shot task episode comprising a support set $\mathcal{S}$ and a query set $\mathcal{Q}$, the proposed architecture aims to learn a highly discriminative and robust metric space. 
+The overall pipeline of our framework is illustrated in Fig.~\ref{}.
+Specifically, the framework consists of four meticulously designed components. 
+First, the Visual Grounded Semantic Refinement (VGSR) module is introduced to synthesize high-quality, visually anchored class descriptions via a Large Language Model (LLM), thereby suppressing semantic hallucinations and providing reliable prior knowledge. 
+Subsequently, to overcome the representational bottlenecks of traditional late-fusion strategies, the Dual Cross-Modal Attention (DCMA) module is embedded deeply within the intermediate stages of the visual backbone. 
+Guided by the VGSR-generated textual priors, DCMA executes multi-scale cross-modal interactions along both spatial and channel dimensions, which actively suppresses redundant RS background clutters and highlights discriminative foreground targets. 
+After obtaining the enhanced visual representations, the Adaptive Prototype Construction Module (APCM) dynamically constructs representative class centers in the metric space. 
+By jointly evaluating the intra-class compactness and inter-class repulsion, APCM adaptively allocates weights to support samples, thereby mitigating the interference from outliers and broadening the decision boundaries for easily confused categories. 
+Finally, during the meta-test inference phase, a Compactness-Aware Prototype Fusion (CPF) strategy driven by uncertainty estimation is seamlessly integrated. 
+CPF quantitatively evaluates the distribution uncertainties to achieve an adaptive dynamic fusion of purely visual and semantically enhanced prototypes, further rectifying the prototype shift typically caused by extreme data scarcity. 
+The final classification decision is determined by computing the cosine similarity between the query features and the rectified prototypes, and the entire framework is optimized end-to-end using the standard cross-entropy loss.
+
+\subsection{Visual Grounded Semantic Refinement (VGSR)}
+\label{sec:vgsr}
+A critical limitation of existing semantics-assisted methods is that large language models (LLMs) often generate generic descriptions or semantic hallucinations that lack grounding in complex remote sensing realities. 
+To overcome this semantic ambiguity and bridge the modality gap, we introduce the Visual Grounded Semantic Refinement (VGSR) module to synthesize highly discriminative, visually anchored textual priors.
+The Visual Grounded Semantic Refinement (VGSR) module is designed to generate highly discriminative and visually anchored textual priors. 
+Given a specific remote sensing scene category $c$ and its corresponding $K$-shot support images $\mathcal{S}_c$, this module leverages a Vision-Language Model (VLM) to execute a three-stage structured prompting protocol to obtain refined category descriptions. 
+The forward process proceeds as follows. 
+
+First, in the \textit{Semantic Prior Generation} phase, the VLM synthesizes an intrinsic description of category $c$ utilizing its rich remote sensing domain knowledge, focusing on invariant attributes such as typical geometric structures, spatial configurations, and textural signatures. 
+
+Second, during the \textit{Visual Evidence Extraction} phase, the model analyzes the provided support set $\mathcal{S}_c$ to identify observable visual features, explicitly documenting factual cues including structural patterns and dominant textures present in the actual images. 
+
+Third, in the \textit{Semantic Refinement} phase, the module performs a cross-modal intersection. 
+It isolates features that are consistent between the semantic prior and the visual observations, while filtering out instance-specific anomalies such as transient illumination, localized background clutter, and sensor artifacts. 
+
+Through these three stages, the VGSR module outputs a concise and robust single-sentence text $T_c$ that characterizes the generalized visual features of the category. 
+Subsequently, this text is fed into a pre-trained text encoder to extract the text embedding $E_c \in \mathbb{R}^{D}$, which serves as the semantic guidance for the succeeding Dual Cross-Modal Attention (DCMA) module.
+The adopted prompt template is presented as follows.
+\begin{promptbox}{Prompt for Visual Grounded Semantic Refinement}
+Task: Generate a concise, class-level description for \texttt{\detokenize{{class_name}}} in remote sensing imagery, utilizing the category label and a set of representative images.
+
+Step 1: Semantic Prior Generation
+
+Synthesize a description of \texttt{\detokenize{{class_name}}} grounded in remote sensing domain knowledge. Focus on invariant attributes such as typical geometric structures, spatial configurations, and textural signatures.
+
+Step 2: Visual Evidence Extraction
+
+Analyze the provided support images to identify observable visual features. Document factual cues, including structural patterns, spatial layouts, and dominant textures.
+
+Step 3: Semantic Refinement
+
+Refine the description by isolating features that are consistent between the semantic prior and visual observations. Filter out instance-specific anomalies, such as transient illumination, localized background clutter, or sensor artifacts.
+
+Output:
+Provide a single, concise sentence that robustly describes \texttt{\detokenize{{class_name}}} in remote sensing imagery, emphasizing generalized visual characteristics.
+
+Class Name: \texttt{\detokenize{{class_name}}}
+
+Images: [Provided below]
+\end{promptbox}
+
 \section{Where to get the IEEEtran Templates}
 \noindent The {\bf{IEEE Template Selector}} will always have the most up-to-date versions of the \LaTeX\ and MSWord templates. Please see: \url{https://template-selector.ieee.org/} and follow the steps to find the correct template for your intended publication. Many publications use the IEEETran LaTeX templates, however, some publications have their own special templates. Many of these are  based on IEEEtran, but may have special instructions that vary slightly from those in this document.
 
