@@ -2,24 +2,21 @@
 \usepackage{tcolorbox}
 \tcbuselibrary{skins,breakable}
 
-% 提示词模板样式：一体化灰色标题栏 + 圆角外框 + 灰色文本框
-\newtcolorbox{promptbox}[1]{enhanced,breakable,
-  colback=gray!20,
-  colframe=blue!50!black,boxrule=0.8pt, % 正文大框：蓝色边框
-  arc=2mm,
-  title={#1},
-  colbacktitle=gray!20,                   % 标题栏灰底
-  coltitle=black,                         % 标题文字黑色（防止被全局设成白色）
-  fonttitle=\bfseries\color{black},
+% CIP 模板样式：白底 + 灰色外框 + 灰色标题栏（白字）
+\newtcolorbox{cipbox}[1]{enhanced,breakable,
+  colback=white,
+  colframe=gray!65,
+  boxrule=0.9pt,
+  arc=3mm,
+  left=6mm,right=6mm,top=5mm,bottom=5mm,
+  title={\strut\raggedright #1},
+  colbacktitle=gray!70,
+  coltitle=white,
+  fonttitle=\bfseries\fontsize{9pt}{10.5pt}\selectfont,
   titlerule=0pt,
-  left=6pt,right=6pt,top=4pt,bottom=4pt,
-  before upper={\setlength{\parindent}{0pt}\small},
-  % 在“标题栏区域”额外画一圈黑色边框（圆角）
-  overlay unbroken={\draw[black,line width=0.8pt,rounded corners=2mm]
-    (title.north west) rectangle (title.south east);},
-  overlay first={\draw[black,line width=0.8pt,rounded corners=2mm]
-    (title.north west) rectangle (title.south east);},
+  before upper={\setlength{\parindent}{0pt}\setlength{\parskip}{4pt}\fontsize{9pt}{11pt}\selectfont},
 }
+
 \usepackage{amsmath,amsfonts}
 \usepackage{algorithmic}
 \usepackage{array}
@@ -154,7 +151,7 @@ Finally, during the meta-test inference phase, a Compactness-Aware Prototype Fus
 CPF quantitatively evaluates the distribution uncertainties to achieve an adaptive dynamic fusion of purely visual and semantically enhanced prototypes, further rectifying the prototype shift typically caused by extreme data scarcity. 
 The final classification decision is determined by computing the cosine similarity between the query features and the rectified prototypes, and the entire framework is optimized end-to-end using the standard cross-entropy loss.
 
-\subsection{Visual Grounded Semantic Refinement (VGSR)}
+\subsection{Visual Grounded Semantic Refinement}
 \label{sec:vgsr}
 A critical limitation of existing semantics-assisted methods is that large language models (LLMs) often generate generic descriptions or semantic hallucinations that lack grounding in complex remote sensing realities. 
 To overcome this semantic ambiguity and bridge the modality gap, we introduce the Visual Grounded Semantic Refinement (VGSR) module to synthesize highly discriminative, visually anchored textual priors.
@@ -172,7 +169,7 @@ It isolates features that are consistent between the semantic prior and the visu
 Through these three stages, the VGSR module outputs a concise and robust single-sentence text $T_c$ that characterizes the generalized visual features of the category. 
 Subsequently, this text is fed into a pre-trained text encoder to extract the text embedding $E_c \in \mathbb{R}^{D}$, which serves as the semantic guidance for the succeeding Dual Cross-Modal Attention (DCMA) module.
 The adopted prompt template is presented as follows.
-\begin{promptbox}{Prompt for Visual Grounded Semantic Refinement}
+\begin{cipbox}{Prompt for Visual Grounded Semantic Refinement}
 Task: Generate a concise, class-level description for \texttt{\detokenize{{class_name}}} in remote sensing imagery, utilizing the category label and a set of representative images.
 
 Step 1: Semantic Prior Generation
@@ -193,7 +190,13 @@ Provide a single, concise sentence that robustly describes \texttt{\detokenize{{
 Class Name: \texttt{\detokenize{{class_name}}}
 
 Images: [Provided below]
-\end{promptbox}
+\end{cipbox}
+
+The primary technical advantage of this mechanism is its ability to effectively eliminate the inherent semantic hallucinations of LLMs and fundamentally resolve the modality contradiction between visual features and textual descriptions. 
+By establishing a reliable and visually anchored textual prior, it equips the subsequent cross-modal feature fusion with strong robustness against complex background interference, maintaining high discriminability even under extreme data scarcity.
+
+\subsection{Dual Cross-Modal Attention}
+\label{sec:dcma}
 
 \section{Where to get the IEEEtran Templates}
 \noindent The {\bf{IEEE Template Selector}} will always have the most up-to-date versions of the \LaTeX\ and MSWord templates. Please see: \url{https://template-selector.ieee.org/} and follow the steps to find the correct template for your intended publication. Many publications use the IEEETran LaTeX templates, however, some publications have their own special templates. Many of these are  based on IEEEtran, but may have special instructions that vary slightly from those in this document.
